@@ -29,7 +29,8 @@
 // equally well with other routers that support SSR
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
-import { ApolloProvider } from '@apollo/react-common';
+import { ApolloProvider } from '@apollo/client';
+// import { ApolloProvider } from '@apollo/react-common';
 import 'cross-fetch/polyfill';
 import { ApolloClient } from 'apollo-client';
 import { createHttpLink } from 'apollo-link-http';
@@ -37,9 +38,10 @@ import Express from 'express';
 import { StaticRouter } from 'react-router';
 import { InMemoryCache } from "apollo-cache-inmemory";
 import ssrPrepass from 'react-ssr-prepass'
-import { renderToStringWithData } from "@apollo/react-ssr";
+// import { renderToStringWithData } from "@apollo/react-ssr";
 import Layout from './routes/Layout';
 import fetch from 'node-fetch'
+const { ApolloServer, gql } = require('apollo-server');
 // import { makeExecutableSchema, addMockFunctionsToSchema } from 'graphql-tools';
 
 
@@ -48,24 +50,91 @@ import fetch from 'node-fetch'
 const basePort = 8000
 const app = new Express();
 
+// const typeDefs = gql`
+//   type products {
+//     title: String
+//     author: String
+//   }
 
+//   type Query {
+//     books: [Book]
+//   }
+// `;
+
+const productQuery = gql`
+query AllProducts($numProducts: Int!) {
+  products(first:$numProducts) {
+      edges {
+          node {
+              id
+              title
+              descriptionHtml
+          }
+      }
+  }
+}
+`;
+
+// const typeDefs = gql`
+  
+//   type Book {
+//     title: String
+//     author: String
+//   }
+
+//   type Query {
+//     books: [Book]
+//   }
+// `;
+// const books = [
+//   {
+//     title: 'The Awakening',
+//     author: 'Kate Chopin',
+//   },
+//   {
+//     title: 'City of Glass',
+//     author: 'Paul Auster',
+//   },
+// ];
+// const resolvers = {
+//   Query: {
+//     books: () => books,
+//   },
+// };
+
+// const server = new ApolloServer({ typeDefs, resolvers });
 
 app.use((req, res) => {
   const link = createHttpLink({ uri: '/graphql', fetch: fetch });
   const client = new ApolloClient({
     ssrMode: true,
-    // fetch,
+    fetch,
     
     link: createHttpLink({
-      uri: 'http://localhost:4000',
+      uri: 'http://localhost:3000/shopify/app/products?shop=prosper-dev-test.myshopify.com',
       fetch,
       credentials: 'same-origin',
+      // headers: {
+      //   cookie: req.header('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'),
+      // },
       headers: {
-        cookie: req.header('X-Shopify-Access-Token'),
-      },
+        'X-Shopify-Access-Token': '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',
+        'content-type': 'application/json',
+        // 'Authorization' :
+    },
+      
     }),
     cache: new InMemoryCache(),
   });
+  // client.ApolloServer({ typeDefs, resolvers })
+  client.query({
+    query: productQuery,
+    // variables : {
+    //   numProducts : filter.numProducts || 10,
+    // }
+  })
+  // .then(result => resolve(result.data))
+  // .catch(error => reject(error))
 
   const context = {};
 

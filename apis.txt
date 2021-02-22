@@ -1,0 +1,3 @@
+https://f671744fd02270cce93384d577bd6da1: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@prosper-dev-test.myshopify.com/admin/api/2021-01/products.json
+
+https://f671744fd02270cce93384d577bd6da1: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@prosper-dev-test.myshopify.com/admin/api/2021-01/graphql.json
